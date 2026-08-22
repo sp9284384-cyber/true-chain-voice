@@ -1,0 +1,766 @@
+   200→
+   201→-   Build a standalone verification script/endpoint that walks the chain
+   202→    and confirms every hash matches — this is what you'll run live in
+   203→    the demo
+   204→
+   205→-   Test tampering: manually edit a row in the DB, run verification,
+   206→    confirm it flags the break at the correct point in the chain
+   207→
+   208→Phase 4 — AI-Assisted Triage (3-4 hrs)
+   209→
+   210→-   Wire up Ollama (reuse your ADAPT LangChain setup) to classify
+   211→    incoming reports: category (harassment/corruption/misconduct/other),
+   212→    urgency (low/med/high)
+   213→
+   214→-   Optional stretch: simple embedding-based clustering
+   215→    (sentence-transformers, runs fine on your 3070 Ti) to group similar
+   216→    reports without exposing which reporter filed which — cluster on
+   217→    content only, never on metadata that could re-identify
+   218→
+   219→Phase 5 — Investigator Portal (3-4 hrs)
+   220→
+   221→-   Authenticated dashboard (separate from the public reporting form)
+   222→    showing: report queue sorted by AI-assigned urgency, category tags,
+   223→    chain-integrity status badge per report (✅ verified / ⚠️ tampered)
+   224→
+   225→-   Status-update capability that appends a new chain-linked entry
+   226→    rather than mutating the original report (preserves the
+   227→    "append-only" story)
+   228→
+   229→-   Basic auth is fine here — investigators aren't the ones needing
+   230→    anonymity
+   231→
+   232→Phase 6 — Integration & End-to-End Testing (2-3 hrs)
+   233→
+   234→-   Full flow test: submit → sanitize → encrypt → hash-chain → AI triage
+   235→    → appears correctly in investigator dashboard
+   236→
+   237→-   Deliberately break something (edit a DB row) and confirm the whole
+   238→    pipeline surfaces it correctly, not just the isolated script
+   239→
+   240→Phase 7 — Demo Polish & Script Rehearsal (2-3 hrs)
+   241→
+   242→-   Rehearse the exact live demo sequence: submit report with photo →
+   243→    show metadata stripped → show hash chain growing → tamper with a
+   244→    past record on screen → verification catches it → show AI triage
+   245→    categorizing a new report
+   246→
+   247→-   Prepare 1-2 slides on the architecture diagram (you already have a
+   248→    clean one) and the "why this matters" framing (retaliation fear →
+   249→    underreporting → this closes that gap)
+   250→
+   251→-   Buffer time for whatever breaks in the last hour — always does
+   252→
+   253→of project
+   254→
+   255→Here's the full backend and database architecture, with each piece
+   256→explained.
+   257→
+   258→Database Schema
+   259→
+   260→sql
+   261→
+   262→-- Reports table: the core anonymous submissions
+   263→
+   264→CREATE TABLE reports (
+   265→
+   266→id INTEGER PRIMARY KEY AUTOINCREMENT,
+   267→
+   268→session_token TEXT NOT NULL, -- random token, NOT tied to identity; lets
+   269→reporter check status later
+   270→
+   271→encrypted_content BLOB NOT NULL, -- AES/Fernet-encrypted report text
+   272→
+   273→category TEXT, -- harassment / corruption / misconduct / other
+   274→(AI-assigned)
+   275→
+   276→urgency TEXT, -- low / medium / high (AI-assigned)
+   277→
+   278→status TEXT DEFAULT 'submitted', -- submitted / under_review / resolved
+   279→
+   280→report_hash TEXT NOT NULL, -- SHA256(content + evidence_hash +
+   281→prev_hash)
+   282→
+   283→prev_hash TEXT, -- hash of the previous report in the chain (NULL for
+   284→first ever report)
+   285→
+   286→embedding BLOB, -- stored vector (for clustering similar reports)
+   287→
+   288→created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   289→
+   290→);
+   291→
+   292→-- Evidence table: sanitized files linked to reports
+   293→
+   294→CREATE TABLE evidence (
+   295→
+   296→id INTEGER PRIMARY KEY AUTOINCREMENT,
+   297→
+   298→report_id INTEGER NOT NULL,
+   299→
+   300→sanitized_file_path TEXT NOT NULL, -- path to metadata-stripped,
+   301→encrypted file
+   302→
+   303→file_hash TEXT NOT NULL, -- SHA256 of the sanitized file (feeds into
+   304→report_hash)
+   305→
+   306→original_metadata_removed TEXT, -- log of what was stripped (for demo
+   307→transparency, not sensitive)
+   308→
+   309→uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   310→
+   311→FOREIGN KEY (report_id) REFERENCES reports(id)
+   312→
+   313→);
+   314→
+   315→-- Status updates: append-only log instead of mutating reports directly
+   316→
+   317→CREATE TABLE status_updates (
+   318→
+   319→id INTEGER PRIMARY KEY AUTOINCREMENT,
+   320→
+   321→report_id INTEGER NOT NULL,
+   322→
+   323→new_status TEXT NOT NULL,
+   324→
+   325→updated_by TEXT, -- investigator ID (internal, not reporter-facing)
+   326→
+   327→update_hash TEXT NOT NULL, -- chained the same way as reports, preserves
+   328→integrity story
+   329→
+   330→prev_update_hash TEXT,
+   331→
+   332→created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   333→
+   334→FOREIGN KEY (report_id) REFERENCES reports(id)
+   335→
+   336→);
+   337→
+   338→-- Investigators: separate from reporters, this is the only table with
+   339→real identity
+   340→
+   341→CREATE TABLE investigators (
+   342→
+   343→id INTEGER PRIMARY KEY AUTOINCREMENT,
+   344→
+   345→username TEXT UNIQUE NOT NULL,
+   346→
+   347→password_hash TEXT NOT NULL,
+   348→
+   349→role TEXT DEFAULT 'investigator'
+   350→
+   351→);
+   352→
+   353→Why it's structured this way:
+   354→
+   355→-   reports never stores a name/email/employee-ID — the session_token is
+   356→    the only thing linking a submission back to the person who filed it,
+   357→    and only they know it
+   358→
+   359→-   prev_hash on both reports and status_updates is what makes the chain
+   360→    — each new row cryptographically depends on the one before it, so
+   361→    editing history breaks verification
+   362→
+   363→-   status_updates is separate from reports.status being directly
+   364→    editable — this is deliberate: investigators never mutate a report
+   365→    row, they append a new linked update, which is what lets you
+   366→    honestly say "nothing here is ever overwritten"
+   367→
+   368→-   embedding sits on the report row itself so clustering doesn't need a
+   369→    separate service call every time
+   370→
+   371→Backend Folder Structure (FastAPI)
+   372→
+   373→backend/
+   374→
+   375→├── main.py # FastAPI app entrypoint, route registration
+   376→
+   377→├── database.py # DB connection/session setup (SQLAlchemy)
+   378→
+   379→├── models.py # SQLAlchemy ORM models matching schema above
+   380→
+   381→├── schemas.py # Pydantic request/response models
+   382→
+   383→├── config.py # encryption keys, model paths, env vars
+   384→
+   385→│
+   386→
+   387→├── routers/
+   388→
+   389→│ ├── reports.py # POST /reports (submit), GET /reports/{token} (status
+   390→check)
+   391→
+   392→│ ├── evidence.py # POST /reports/{id}/evidence (file upload)
+   393→
+   394→│ ├── investigator.py # GET /investigator/reports, PATCH
+   395→/reports/{id}/status
+   396→
+   397→│ └── verify.py # GET /verify/{id} — runs chain verification
+   398→
+   399→│
+   400→
+   401→├── services/
+   402→
+   403→│ ├── crypto.py # encrypt_content(), decrypt_content(),
+   404→hash_chain_link()
+   405→
+   406→│ ├── sanitize.py # strip_exif(), strip_pdf_metadata()
+   407→
+   408→│ ├── ai_triage.py # classify_report() via Ollama, generate_embedding()
+   409→
+   410→│ └── chain_verify.py # walk the hash chain, detect breaks
+   411→
+   412→│
+   413→
+   414→└── requirements.txt
+   415→
+   416→What each service does:
+   417→
+   418→crypto.py — two jobs: (1) encrypts report content before it touches the
+   419→DB, decrypts it only when an authenticated investigator pulls it up; (2)
+   420→computes SHA256(content + evidence_hash + prev_hash) for chain-linking.
+   421→Keep these separate functions so encryption and hashing are
+   422→independently testable.
+   423→
+   424→sanitize.py — runs on every file upload before storage.
+   425→Uses Pillow's Image.info clearing for images, PyPDF2/pikepdf metadata
+   426→stripping for PDFs. Returns both the cleaned file and a hash of it,
+   427→which feeds into the report's chain hash.
+   428→
+   429→ai_triage.py — calls your local Ollama instance with a structured
+   430→prompt: "Classify this report into one of [categories] and assign
+   431→urgency [low/med/high]. Return JSON only." Also generates a
+   432→sentence-embedding vector (via sentence-transformers) stored on the
+   433→report for later clustering — no training, purely inference calls.
+   434→
+   435→chain_verify.py — the demo centerpiece. Walks every report in order,
+   436→recomputes each hash from stored content, and compares it against the
+   437→stored report_hash. Returns the first row where they diverge, if any.
+   438→This is what you call live when you "break" a record on stage.
+   439→
+   440→API Endpoints
+   441→
+   442→  ---------------------------------------------------------------------------
+   443→  Method   Path                                Purpose
+   444→  -------- ----------------------------------- ------------------------------
+   445→  POST     /reports                            Submit a new report (returns
+   446→                                               session_token to reporter)
+   447→
+   448→  POST     /reports/{id}/evidence              Upload + sanitize + attach a
+   449→                                               file to a report
+   450→
+   451→  GET      /reports/{token}/status             Reporter checks their own
+   452→                                               report status (no login)
+   453→
+   454→  GET      /investigator/reports               Dashboard: list all reports,
+   455→                                               sorted by urgency
+   456→
+   457→  PATCH    /investigator/reports/{id}/status   Append a new status_update
+   458→                                               (chain-linked, not
+   459→                                               overwritten)
+   460→
+   461→  GET      /verify/{id}                        Run chain-integrity check on a
+   462→                                               specific report or the whole
+   463→                                               chain
+   464→
+   465→  POST     /investigator/login                 Auth for the
+   466→                                               investigator-facing dashboard
+   467→                                               only
+   468→  ---------------------------------------------------------------------------
+   469→
+   470→Flow through the system, end to end:
+   471→
+   472→1.  Report submitted → crypto.py encrypts content → sanitize.py cleans
+   473→    any attached file → ai_triage.py classifies + embeds
+   474→    → crypto.py computes the chain hash using the previous report's hash
+   475→    → row written to reports
+   476→
+   477→2.  Investigator opens dashboard → backend decrypts content on the fly
+   478→    for authorized viewing only → sorted by AI-assigned urgency
+   479→
+   480→3.  Status change → new row in status_updates, chained the same way,
+   481→    original reports row untouched
+   482→
+   483→4.  Verification → chain_verify.py recomputes every hash in sequence and
+   484→    flags the first mismatch
+   485→
+   486→This gives you a clean separation: anonymity logic lives in
+   487→how reports is structured (no PII columns, ever), integrity logic lives
+   488→entirely in the hash-chain service, and AI is a thin inference layer
+   489→that doesn't touch either of those concerns. That separation is also a
+   490→good thing to say out loud to judges — it shows the privacy and
+   491→integrity guarantees don't depend on the AI working correctly.
+   492→
+   493→Here's the full frontend structure with the reasoning behind every
+   494→piece.
+   495→
+   496→frontend/
+   497→
+   498→├── app/
+   499→
+   500→│ ├── layout.tsx
+   501→
+   502→│ ├── page.tsx # landing page
+   503→
+   504→│ │
+   505→
+   506→│ ├── report/
+   507→
+   508→│ │ ├── page.tsx # anonymous report submission form
+   509→
+   510→│ │ └── confirmation/
+   511→
+   512→│ │ └── page.tsx # shows session_token after submit
+   513→
+   514→│ │
+   515→
+   516→│ ├── status/
+   517→
+   518→│ │ └── [token]/
+   519→
+   520→│ │ └── page.tsx # reporter checks their own report status
+   521→
+   522→│ │
+   523→
+   524→│ ├── verify/
+   525→
+   526→│ │ └── page.tsx # public chain-integrity demo page
+   527→
+   528→│ │
+   529→
+   530→│ └── investigator/
+   531→
+   532→│ ├── login/
+   533→
+   534→│ │ └── page.tsx
+   535→
+   536→│ └── dashboard/
+   537→
+   538→│ ├── page.tsx # report queue, sorted by urgency
+   539→
+   540→│ └── [id]/
+   541→
+   542→│ └── page.tsx # single report detail view
+   543→
+   544→│
+   545→
+   546→├── components/
+   547→
+   548→│ ├── report/
+   549→
+   550→│ │ ├── ReportForm.tsx
+   551→
+   552→│ │ ├── CategorySelect.tsx
+   553→
+   554→│ │ └── FileUpload.tsx
+   555→
+   556→│ │
+   557→
+   558→│ ├── investigator/
+   559→
+   560→│ │ ├── ReportCard.tsx
+   561→
+   562→│ │ ├── ReportQueue.tsx
+   563→
+   564→│ │ ├── UrgencyBadge.tsx
+   565→
+   566→│ │ ├── IntegrityBadge.tsx
+   567→
+   568→│ │ └── StatusUpdateForm.tsx
+   569→
+   570→│ │
+   571→
+   572→│ ├── verify/
+   573→
+   574→│ │ ├── ChainVerifyPanel.tsx
+   575→
+   576→│ │ └── ChainVisualizer.tsx
+   577→
+   578→│ │
+   579→
+   580→│ └── shared/
+   581→
+   582→│ ├── Header.tsx
+   583→
+   584→│ ├── PrivacyNotice.tsx
+   585→
+   586→│ └── LoadingSpinner.tsx
+   587→
+   588→│
+   589→
+   590→├── lib/
+   591→
+   592→│ ├── api.ts # centralized fetch calls to FastAPI backend
+   593→
+   594→│ ├── auth.ts # investigator session/token handling
+   595→
+   596→│ └── types.ts # shared TypeScript interfaces (Report, Evidence, etc.)
+   597→
+   598→│
+   599→
+   600→├── middleware.ts # protects /investigator/* routes
+   601→
+   602→└── public/
+   603→
+   604→Why each piece exists
+   605→
+   606→app/report/ — the entire product exists to make this page trustworthy.
+   607→It's deliberately isolated from anything auth-related in the folder
+   608→tree, so there's no accidental code path where a submission could get
+   609→tied to a logged-in session.
+   610→
+   611→app/report/confirmation/ — separate page (not a modal) so the
+   612→session_token is the only thing shown, with nothing else on screen that
+   613→could be screenshotted alongside identifying context. Also gives you a
+   614→clean demo beat: "here's the token, and that's the only thing that
+   615→connects you to this report."
+   616→
+   617→app/status/[token]/ — lets a reporter check on their submission without
+   618→ever creating an account. Dynamic route on the token itself keeps this
+   619→stateless from your side — you're not maintaining reporter sessions
+   620→anywhere.
+   621→
+   622→app/verify/ — a public page, separate from the investigator dashboard,
+   623→where anyone (including judges) can trigger the chain-verification check
+   624→and watch it work. Keeping this outside /investigator/ means you can
+   625→demo integrity without needing to log in on stage, which makes your live
+   626→demo faster and less failure-prone.
+   627→
+   628→app/investigator/login/ + /dashboard/ — the only part of the app that
+   629→needs real auth. Isolating it under one route lets middleware.ts protect
+   630→the whole subtree with one rule instead of guarding pages individually.
+   631→
+   632→app/investigator/dashboard/[id]/ — dedicated detail view per report,
+   633→because this is where decrypted content gets shown — you want that
+   634→rendering logic in exactly one place, not scattered across a shared card
+   635→component that might also render for unauthenticated contexts.
+   636→
+   637→components/report/FileUpload.tsx — its own component (not folded into
+   638→ReportForm.tsx) because it needs to show the "metadata stripped ✓"
+   639→confirmation after the backend sanitizes the file — that's a distinct
+   640→piece of state and UI feedback worth isolating and testing on its own.
+   641→
+   642→components/investigator/IntegrityBadge.tsx — separate from
+   643→UrgencyBadge.tsx even though both are small badges, because integrity
+   644→status (verified/tampered) and urgency (low/med/high) come from
+   645→completely different backend services (hash-chain vs. AI triage) —
+   646→keeping them as separate components means a bug in one never touches the
+   647→other's rendering logic.
+   648→
+   649→components/investigator/StatusUpdateForm.tsx — deliberately doesn't let
+   650→an investigator edit the original report text, only append a new status.
+   651→The component's constrained API (it can only call the PATCH /status
+   652→endpoint, never PUT /reports) enforces your "nothing is ever
+   653→overwritten" guarantee at the UI layer too, not just the backend.
+   654→
+   655→components/verify/ChainVisualizer.tsx — a visual representation of the
+   656→hash chain (boxes linked by arrows, with a red break shown when
+   657→tampering is detected) — this is worth building as its own component
+   658→because it's your single strongest visual for judges; don't bury it
+   659→inline in a page file where it's harder to polish.
+   660→
+   661→components/shared/PrivacyNotice.tsx — reusable banner ("We never collect
+   662→your name, email, or IP") shown on both the report form and confirmation
+   663→page — a shared component ensures the privacy promise is worded
+   664→identically everywhere, which matters when judges are evaluating trust.
+   665→
+   666→lib/api.ts — every fetch call to your FastAPI backend goes through here
+   667→instead of being scattered in components. This makes it trivial to point
+   668→to a different backend URL for demo vs. local dev, and keeps components
+   669→free of fetch/error-handling boilerplate.
+   670→
+   671→lib/auth.ts — isolates investigator token storage/refresh logic so it's
+   672→the only file in the frontend that ever touches anything
+   673→identity-related — easy to point to if someone asks "where does auth
+   674→live in your codebase."
+   675→
+   676→lib/types.ts — shared Report, Evidence, StatusUpdate interfaces matching
+   677→your backend Pydantic schemas, so the frontend and backend contract
+   678→stays in sync as you iterate under time pressure.
+   679→
+   680→middleware.ts — Next.js middleware that checks for a valid investigator
+   681→session before allowing any /investigator/* route to render, redirecting
+   682→to /investigator/login otherwise. One file, one place to reason about
+   683→who can see decrypted report content.
+   684→
+   685→Connection Map
+   686→
+   687→1. Report Submission Flow
+   688→
+   689→Frontend: app/report/page.tsx → components/report/ReportForm.tsx
+   690→Calls: lib/api.ts → submitReport()
+   691→
+   692→POST /reports
+   693→
+   694→  ------------------------------------------------------------------------
+   695→  Layer      What happens
+   696→  ---------- -------------------------------------------------------------
+   697→  Frontend   ReportForm.tsx collects description + category, calls
+   698→             submitReport(data)
+   699→
+   700→  Backend    routers/reports.py receives payload
+   701→  route      
+   702→
+   703→  Service    crypto.py → encrypt_content() encrypts the text
+   704→
+   705→  Service    crypto.py → hash_chain_link() computes report_hash using the
+   706→             last row's hash
+   707→
+   708→  Database   INSERT INTO reports (session_token, encrypted_content,
+   709→             report_hash, prev_hash, ...)
+   710→
+   711→  Response   { session_token: "abc123", report_id: 42 }
+   712→
+   713→  Frontend   Redirects to app/report/confirmation/page.tsx, displays
+   714→             session_token only
+   715→  ------------------------------------------------------------------------
+   716→
+   717→2. Evidence Upload
+   718→
+   719→Frontend: components/report/FileUpload.tsx (nested inside
+   720→ReportForm.tsx)
+   721→Calls: lib/api.ts → uploadEvidence()
+   722→
+   723→POST /reports/{id}/evidence
+   724→
+   725→  -------------------------------------------------------------------------
+   726→  Layer      What happens
+   727→  ---------- --------------------------------------------------------------
+   728→  Frontend   User attaches file, sent as multipart/form-data with report_id
+   729→
+   730→  Backend    routers/evidence.py receives file
+   731→  route      
+   732→
+   733→  Service    sanitize.py → strip_exif() / strip_pdf_metadata() cleans the
+   734→             file
+   735→
+   736→  Service    crypto.py encrypts the sanitized file, computes file_hash
+   737→
+   738→  Service    Re-runs hash_chain_link() on the parent report since
+   739→             evidence_hash feeds into report_hash
+   740→
+   741→  Database   INSERT INTO evidence (report_id, sanitized_file_path,
+   742→             file_hash, original_metadata_removed)
+   743→
+   744→  Database   UPDATE — actually avoid UPDATE here; instead recompute and
+   745→             store report_hash only if evidence is attached at submission
+   746→             time (design choice: require evidence upload before final
+   747→             report hash is committed, not after)
+   748→
+   749→  Response   { evidence_id: 7, metadata_removed: ["GPS", "device_model",
+   750→             "timestamp"] }
+   751→
+   752→  Frontend   FileUpload.tsx shows "Metadata removed: GPS, device model,
+   753→             timestamp ✓"
+   754→  -------------------------------------------------------------------------
+   755→
+   756→3. Reporter Status Check
+   757→
+   758→Frontend: app/status/[token]/page.tsx
+   759→Calls: lib/api.ts → getReportStatus(token)
+   760→
+   761→GET /reports/{token}/status
+   762→
+   763→  -----------------------------------------------------------------------
+   764→  Layer      What happens
+   765→  ---------- ------------------------------------------------------------
+   766→  Frontend   Reads token from URL param, calls endpoint on page load
+   767→
+   768→  Backend    routers/reports.py looks up report by session_token (not by
+   769→  route      any identity field)
+   770→
+   771→  Database   SELECT status, category, urgency FROM reports WHERE
+   772→             session_token = ?
+   773→
+   774→  Response   { status: "under_review", category: "corruption", urgency:
+   775→             "high" }
+   776→
+   777→  Frontend   Renders status card — no decrypted content shown here,
+   778→             reporter only sees status metadata
+   779→  -----------------------------------------------------------------------
+   780→
+   781→4. AI Triage (happens server-side, not directly frontend-triggered)
+   782→
+   783→Triggered by: the POST /reports flow, automatically, right after
+   784→encryption
+   785→
+   786→Internal call — not a frontend-facing endpoint
+   787→
+   788→  ------------------------------------------------------------------------
+   789→  Layer      What happens
+   790→  ---------- -------------------------------------------------------------
+   791→  Backend    routers/reports.py calls services/ai_triage.py right after
+   792→  route      content is encrypted (uses the plaintext before encryption,
+   793→             in-memory only)
+   794→
+   795→  Service    ai_triage.py → classify_report() sends prompt to local
+   796→             Ollama, gets back category + urgency JSON
+   797→
+   798→  Service    ai_triage.py → generate_embedding() creates vector via
+   799→             sentence-transformers
+   800→
+   801→  Database   Both written into the same reports row: category, urgency,
+   802→             embedding
+   803→  ------------------------------------------------------------------------
+   804→
+   805→This matters for your demo narrative: category/urgency appear in the
+   806→investigator dashboard automatically, with no separate frontend call
+   807→needed — it's baked into submission.
+   808→
+   809→5. Investigator Login
+   810→
+   811→Frontend: app/investigator/login/page.tsx
+   812→Calls: lib/api.ts → login()
+   813→
+   814→POST /investigator/login
+   815→
+   816→  -----------------------------------------------------------------------
+   817→  Layer      What happens
+   818→  ---------- ------------------------------------------------------------
+   819→  Frontend   Submits username/password
+   820→
+   821→  Backend    routers/investigator.py verifies credentials
+   822→  route      
+   823→
+   824→  Database   SELECT password_hash FROM investigators WHERE username = ?
+   825→
+   826→  Response   { access_token: "jwt..." }
+   827→
+   828→  Frontend   lib/auth.ts stores token, middleware.ts now allows access to
+   829→             /investigator/* routes
+   830→  -----------------------------------------------------------------------
+   831→
+   832→6. Investigator Dashboard (Report Queue)
+   833→
+   834→Frontend: app/investigator/dashboard/page.tsx →
+   835→components/investigator/ReportQueue.tsx
+   836→Calls: lib/api.ts → getReports()
+   837→
+   838→GET /investigator/reports
+   839→
+   840→  ------------------------------------------------------------------------
+   841→  Layer      What happens
+   842→  ---------- -------------------------------------------------------------
+   843→  Frontend   Sends request with auth token attached (via lib/auth.ts
+   844→             interceptor)
+   845→
+   846→  Backend    routers/investigator.py verifies JWT, queries all reports
+   847→  route      
+   848→
+   849→  Database   SELECT id, category, urgency, status, created_at FROM reports
+   850→             ORDER BY urgency DESC
+   851→
+   852→  Response   Array of report summaries (content stays encrypted, not
+   853→             decrypted for the list view)
+   854→
+   855→  Frontend   ReportCard.tsx renders each row with UrgencyBadge.tsx
+   856→  ------------------------------------------------------------------------
+   857→
+   858→7. Single Report Detail (decryption happens here)
+   859→
+   860→Frontend: app/investigator/dashboard/[id]/page.tsx
+   861→Calls: lib/api.ts → getReportDetail(id)
+   862→
+   863→GET /investigator/reports/{id}
+   864→
+   865→  ------------------------------------------------------------------------
+   866→  Layer      What happens
+   867→  ---------- -------------------------------------------------------------
+   868→  Backend    Verifies JWT, fetches full row
+   869→  route      
+   870→
+   871→  Service    crypto.py → decrypt_content() — decryption only happens here,
+   872→             on-demand, for an authenticated request
+   873→
+   874→  Database   SELECT * FROM reports WHERE id = ? + SELECT * FROM evidence
+   875→             WHERE report_id = ?
+   876→
+   877→  Response   Decrypted content + evidence file links
+   878→
+   879→  Frontend   Renders full report, with IntegrityBadge.tsx showing chain
+   880→             status (calls endpoint #9 below)
+   881→  ------------------------------------------------------------------------
+   882→
+   883→8. Status Update (append-only)
+   884→
+   885→Frontend: components/investigator/StatusUpdateForm.tsx
+   886→Calls: lib/api.ts → updateStatus()
+   887→
+   888→PATCH /investigator/reports/{id}/status
+   889→
+   890→  -------------------------------------------------------------------------
+   891→  Layer      What happens
+   892→  ---------- --------------------------------------------------------------
+   893→  Backend    routers/investigator.py receives new status
+   894→  route      
+   895→
+   896→  Service    crypto.py → hash_chain_link() computes a new hash for this
+   897→             update, linked to previous status_updates hash
+   898→
+   899→  Database   INSERT INTO status_updates (report_id, new_status,
+   900→             update_hash, prev_update_hash) — never UPDATE reports.status
+   901→             directly
+   902→
+   903→  Response   { success: true, update_hash: "..." }
+   904→
+   905→  Frontend   Dashboard refetches, shows new status in the report's timeline
+   906→  -------------------------------------------------------------------------
+   907→
+   908→9. Chain Verification (your demo centerpiece)
+   909→
+   910→Frontend: app/verify/page.tsx → components/verify/ChainVerifyPanel.tsx /
+   911→ChainVisualizer.tsx
+   912→Calls: lib/api.ts → verifyChain(id?)
+   913→
+   914→GET /verify/{id}
+   915→
+   916→  -------------------------------------------------------------------------
+   917→  Layer      What happens
+   918→  ---------- --------------------------------------------------------------
+   919→  Frontend   User clicks "Verify Integrity" — no auth required, this page
+   920→             is public
+   921→
+   922→  Backend    routers/verify.py triggers chain_verify.py
+   923→  route      
+   924→
+   925→  Service    chain_verify.py walks every report in order, recomputes
+   926→             SHA256(content + evidence_hash + prev_hash), compares to
+   927→             stored report_hash
+   928→
+   929→  Database   SELECT id, report_hash, prev_hash, encrypted_content FROM
+   930→             reports ORDER BY id (read-only, no writes)
+   931→
+   932→  Response   { valid: true } or { valid: false, broken_at: 3,
+   933→             expected_hash: "...", found_hash: "..." }
+   934→
+   935→  Frontend   ChainVisualizer.tsx renders the chain as linked boxes; the
+   936→             broken link turns red if valid: false
+   937→  -------------------------------------------------------------------------
+   938→
+   939→Quick reference table
+   940→
+   941→  ------------------------------------------------------------------------------------
+   942→  Frontend               Endpoint                            Method   DB tables
+   943→  page/component                                                      touched
+   944→  ---------------------- ----------------------------------- -------- ----------------
+   945→  ReportForm.tsx         /reports                            POST     reports
+   946→
+   947→  FileUpload.tsx         /reports/{id}/evidence              POST     evidence,
+   948→                                                                      reports
+   949→
+   950→  status/[token]         /reports/{token}/status             GET      reports (read)
+   951→
+   952→  investigator/login     /investigator/login                 POST     investigators
+   953→                                                                      (read)
+   954→
+   955→  ReportQueue.tsx        /investigator/reports               GET      reports (read)
+   956→
+   957→  dashboard/[id]         /investigator/reports/{id}          GET      reports,
+   958→                                                                      evidence (read)
+   959→
+   960→  StatusUpdateForm.tsx   /investigator/reports/{id}/status   PATCH    status_updates
+   961→                                                                      (insert only)
+   962→
+   963→  ChainVerifyPanel.tsx   /verify/{id}                        GET      reports (read
+   964→                                                                      only)
+   965→  ------------------------------------------------------------------------------------
