@@ -10,7 +10,7 @@ from models import Investigator
 from services.auth import hash_password
 
 
-def seed(username: str = "admin", password: str = "changeme123"):
+def seed(username: str = "sunnypathak979", password: str = "Sunny@979"):
     init_db()
     db = SessionLocal()
     try:
