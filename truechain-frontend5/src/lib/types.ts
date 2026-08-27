@@ -14,8 +14,8 @@ export interface SubmitReportResponse {
 export interface ReportStatus {
   session_token: string;
   status: string;
-  category: string;
-  urgency: string;
+  category?: string;
+  urgency?: string;
   created_at: string;
 }
 
@@ -23,7 +23,7 @@ export interface EvidenceResponse {
   evidence_id: number;
   report_id: number;
   file_hash: string;
-  metadata_removed: string[];
+  metadata_removed: string; // backend returns a plain string log, not an array
   message: string;
 }
 
@@ -46,8 +46,8 @@ export interface LoginResponse {
 
 export interface InvestigatorReport {
   id: number;
-  category: string;
-  urgency: string;
+  category?: string;
+  urgency?: string;
   status: string;
   created_at: string;
 }
@@ -74,4 +74,4 @@ export interface StatusUpdateResponse {
 
 export type Urgency = 'low' | 'medium' | 'high';
 export type Category = 'harassment' | 'corruption' | 'misconduct' | 'other';
-export type ReportStatusType = 'pending' | 'under_review' | 'investigating' | 'resolved' | 'dismissed';
+export type ReportStatusType = 'submitted' | 'under_review' | 'investigating' | 'resolved' | 'dismissed';

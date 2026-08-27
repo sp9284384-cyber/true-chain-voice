@@ -75,7 +75,7 @@ class ReportDetail(BaseModel):
 
 
 class StatusUpdateRequest(BaseModel):
-    new_status: str = Field(..., description="submitted | under_review | resolved")
+    new_status: str = Field(..., description="submitted | under_review | investigating | resolved | dismissed")
     updated_by: Optional[str] = None
 
 

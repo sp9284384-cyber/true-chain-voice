@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface UrgencyBadgeProps {
-  urgency: string;
+  urgency?: string;
 }
 
 const urgencyConfig: Record<string, { label: string; className: string }> = {
@@ -23,7 +23,8 @@ const urgencyConfig: Record<string, { label: string; className: string }> = {
 };
 
 export function UrgencyBadge({ urgency }: UrgencyBadgeProps) {
-  const config = urgencyConfig[urgency] ?? urgencyConfig.low;
+  const key = urgency ?? 'low';
+  const config = urgencyConfig[key] ?? urgencyConfig.low;
 
   return (
     <Badge variant="outline" className={cn('uppercase text-[10px] font-semibold tracking-wider', config.className)}>

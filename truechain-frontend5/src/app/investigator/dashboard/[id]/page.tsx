@@ -24,7 +24,7 @@ import {
 import type { InvestigatorReportDetail } from '@/lib/types';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Pending', className: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/25' },
+  submitted: { label: 'Submitted', className: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/25' },
   under_review: { label: 'Under Review', className: 'bg-sky-500/15 text-sky-300 border-sky-500/25' },
   investigating: { label: 'Investigating', className: 'bg-amber-500/15 text-amber-300 border-amber-500/25' },
   resolved: { label: 'Resolved', className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' },
@@ -152,7 +152,7 @@ export default function ReportDetailPage() {
           <CardHeader>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="uppercase text-[10px] tracking-wider font-medium">
-                {formatCategory(report.category)}
+                {report.category ? formatCategory(report.category) : 'Unspecified'}
               </Badge>
               <UrgencyBadge urgency={report.urgency} />
               <Badge variant="outline" className={status.className}>

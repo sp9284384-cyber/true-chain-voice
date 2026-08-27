@@ -23,7 +23,7 @@ interface StatusUpdateFormProps {
 }
 
 const statusOptions = [
-  { value: 'pending', label: 'Pending' },
+  { value: 'submitted', label: 'Submitted' },
   { value: 'under_review', label: 'Under Review' },
   { value: 'investigating', label: 'Investigating' },
   { value: 'resolved', label: 'Resolved' },

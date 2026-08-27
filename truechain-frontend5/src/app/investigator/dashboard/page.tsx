@@ -26,9 +26,9 @@ export default function InvestigatorDashboardPage() {
 
     let cancelled = false;
 
-    async function fetchReports() {
+    async function fetchReports(authToken: string) {
       try {
-        const data = await getInvestigatorReports(token);
+        const data = await getInvestigatorReports(authToken);
         if (!cancelled) {
           setReports(data);
         }
@@ -44,7 +44,7 @@ export default function InvestigatorDashboardPage() {
       }
     }
 
-    fetchReports();
+    fetchReports(token);
 
     return () => {
       cancelled = true;
@@ -91,8 +91,8 @@ export default function InvestigatorDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <MiniStat label="Total Reports" value={reports.length} />
           <MiniStat
-            label="Pending"
-            value={reports.filter((r) => r.status === 'pending').length}
+            label="Submitted"
+            value={reports.filter((r) => r.status === 'submitted').length}
           />
           <MiniStat
             label="Investigating"

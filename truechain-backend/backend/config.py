@@ -40,4 +40,5 @@ CORS_ORIGINS = os.getenv(
 
 VALID_CATEGORIES = ["harassment", "corruption", "misconduct", "other"]
 VALID_URGENCY = ["low", "medium", "high"]
-VALID_STATUS = ["submitted", "under_review", "resolved"]
+# Full investigator lifecycle: submitted → under_review → investigating → resolved/dismissed
+VALID_STATUS = ["submitted", "under_review", "investigating", "resolved", "dismissed"]
