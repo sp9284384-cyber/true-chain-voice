@@ -19,7 +19,7 @@ from schemas import (
 )
 from services.auth import verify_password, create_access_token, get_current_investigator
 from services.crypto import decrypt_content, compute_update_hash, _fernet
-from config import VALID_STATUS, BASE_DIR
+from config import VALID_STATUS, BASE_DIR, EVIDENCE_DIR
 
 router = APIRouter(prefix="/investigator", tags=["investigator"])
 
@@ -96,7 +96,8 @@ def download_evidence(
     if not evidence:
         raise HTTPException(status_code=404, detail="Evidence not found")
 
-    file_path = BASE_DIR / evidence.sanitized_file_path
+    # DB may store path as 'evidence\filename' or just 'filename' — resolve against EVIDENCE_DIR
+    file_path = EVIDENCE_DIR / Path(evidence.sanitized_file_path).name
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File on disk not found")
 
