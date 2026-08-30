@@ -6,6 +6,8 @@ services:
     startCommand: bash -c "cd truechain-backend/backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     plan: free
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: FERNET_KEY
         value: YF7w_NVcloZDTNRuzl0zhTDJnf3n_4EbtAL7tpICU7A=
       - key: JWT_SECRET
