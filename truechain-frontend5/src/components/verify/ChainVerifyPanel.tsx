@@ -54,6 +54,12 @@ export function ChainVerifyPanel() {
 
   useEffect(() => {
     handleVerify();
+
+    const onReverify = () => {
+      handleVerify();
+    };
+    window.addEventListener('reverify-chain', onReverify);
+    return () => window.removeEventListener('reverify-chain', onReverify);
   }, [handleVerify]);
 
   return (

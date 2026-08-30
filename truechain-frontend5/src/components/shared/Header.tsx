@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Shield, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +23,15 @@ const navLinks = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  const handleLinkClick = (href: string) => (e: React.MouseEvent) => {
+    if (href === '/verify' && pathname === '/verify') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.dispatchEvent(new CustomEvent('reverify-chain'));
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/80 backdrop-blur-md">
@@ -40,6 +50,7 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={handleLinkClick(link.href)}
               className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               {link.label}
@@ -66,6 +77,7 @@ export function Header() {
                 <SheetClose asChild key={link.href}>
                   <Link
                     href={link.href}
+                    onClick={handleLinkClick(link.href)}
                     className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
                     {link.label}
