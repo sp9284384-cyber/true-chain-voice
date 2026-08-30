@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Shield, Loader2, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
+import { Shield, Loader2, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 export default function InvestigatorLoginPage() {
   const router = useRouter();
@@ -47,7 +48,15 @@ export default function InvestigatorLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+    <div className="relative min-h-screen flex items-center justify-center px-4 bg-background">
+      {/* Back to home */}
+      <Link
+        href="/"
+        className="absolute top-5 left-5 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Back to Home
+      </Link>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
