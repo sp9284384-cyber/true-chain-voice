@@ -62,6 +62,15 @@ class ReportSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class EvidenceItem(BaseModel):
+    id: int
+    file_hash: str
+    metadata_removed: Optional[str] = None
+    uploaded_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ReportDetail(BaseModel):
     id: int
     content: str  # decrypted, investigator-only
@@ -72,6 +81,7 @@ class ReportDetail(BaseModel):
     prev_hash: Optional[str] = None
     created_at: datetime
     evidence_count: int = 0
+    evidence_list: List[EvidenceItem] = []
 
 
 class StatusUpdateRequest(BaseModel):

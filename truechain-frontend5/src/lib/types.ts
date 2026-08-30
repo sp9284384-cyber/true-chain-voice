@@ -52,11 +52,19 @@ export interface InvestigatorReport {
   created_at: string;
 }
 
+export interface EvidenceItem {
+  id: number;
+  file_hash: string;
+  metadata_removed?: string;
+  uploaded_at: string;
+}
+
 export interface InvestigatorReportDetail extends InvestigatorReport {
   content: string;
   report_hash: string;
   prev_hash: string;
   evidence_count: number;
+  evidence_list?: EvidenceItem[];
 }
 
 export interface StatusUpdateRequest {

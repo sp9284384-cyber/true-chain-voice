@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/auth';
-import { getInvestigatorReportDetail } from '@/lib/api';
+import { getInvestigatorReportDetail, downloadEvidenceFile } from '@/lib/api';
 import { UrgencyBadge } from '@/components/investigator/UrgencyBadge';
 import { StatusUpdateForm } from '@/components/investigator/StatusUpdateForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,8 +20,10 @@ import {
   Paperclip,
   AlertTriangle,
   Shield,
+  Download,
+  FileCheck,
 } from 'lucide-react';
-import type { InvestigatorReportDetail } from '@/lib/types';
+import type { InvestigatorReportDetail, EvidenceItem } from '@/lib/types';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   submitted: { label: 'Submitted', className: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/25' },
@@ -50,6 +52,50 @@ function formatCategory(category: string): string {
     .split('_')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+function EvidenceDownloadButton({
+  token,
+  reportId,
+  evidenceId,
+}: {
+  token: string;
+  reportId: number;
+  evidenceId: number;
+}) {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const blob = await downloadEvidenceFile(token, reportId, evidenceId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `evidence_report_${reportId}_file_${evidenceId}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert('Failed to download decrypted evidence file.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleDownload}
+      disabled={downloading}
+      className="gap-2 text-xs"
+    >
+      <Download className="size-3.5" />
+      {downloading ? 'Decrypting...' : 'View / Download File'}
+    </Button>
+  );
 }
 
 export default function ReportDetailPage() {
@@ -177,6 +223,47 @@ export default function ReportDetailPage() {
                 {report.content}
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Attached Evidence */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Paperclip className="size-4 text-primary" />
+              Attached Evidence ({report.evidence_count})
+            </CardTitle>
+            <CardDescription>
+              Files are EXIF-sanitized and stored AES-encrypted at rest. Decrypted only for authorized investigator sessions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-4">
+            {(!report.evidence_list || report.evidence_list.length === 0) ? (
+              <p className="text-sm text-muted-foreground italic">No evidence files were attached to this report.</p>
+            ) : (
+              report.evidence_list.map((item) => (
+                <div key={item.id} className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="size-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Evidence File #{item.id}</span>
+                    </div>
+                    <EvidenceDownloadButton token={token} reportId={report.id} evidenceId={item.id} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1 font-medium">SHA-256 File Hash</p>
+                    <code className="block rounded bg-background border border-border px-2.5 py-1 text-xs font-mono text-muted-foreground break-all">
+                      {item.file_hash}
+                    </code>
+                  </div>
+                  {item.metadata_removed && (
+                    <p className="text-xs text-emerald-400/90 font-mono">
+                      ✓ Sanitization: {item.metadata_removed}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 

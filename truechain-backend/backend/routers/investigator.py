@@ -6,7 +6,8 @@ PATCH /investigator/reports/{id}/status  — append-only status update
 
 Every route here (except login) requires a valid investigator JWT.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from pathlib import Path
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -14,10 +15,11 @@ from models import Report, Investigator, StatusUpdate, Evidence
 from schemas import (
     InvestigatorLogin, InvestigatorLoginResponse,
     ReportSummary, ReportDetail, StatusUpdateRequest, StatusUpdateResponse,
+    EvidenceItem,
 )
 from services.auth import verify_password, create_access_token, get_current_investigator
-from services.crypto import decrypt_content, compute_update_hash
-from config import VALID_STATUS
+from services.crypto import decrypt_content, compute_update_hash, _fernet
+from config import VALID_STATUS, BASE_DIR
 
 router = APIRouter(prefix="/investigator", tags=["investigator"])
 
@@ -55,7 +57,16 @@ def get_report_detail(
         raise HTTPException(status_code=404, detail="Report not found")
 
     content = decrypt_content(report.encrypted_content)  # only ever decrypted here
-    evidence_count = db.query(Evidence).filter(Evidence.report_id == report_id).count()
+    evidence_records = db.query(Evidence).filter(Evidence.report_id == report_id).all()
+    evidence_list = [
+        EvidenceItem(
+            id=e.id,
+            file_hash=e.file_hash,
+            metadata_removed=e.original_metadata_removed,
+            uploaded_at=e.uploaded_at,
+        )
+        for e in evidence_records
+    ]
 
     return ReportDetail(
         id=report.id,
@@ -66,8 +77,41 @@ def get_report_detail(
         report_hash=report.report_hash,
         prev_hash=report.prev_hash,
         created_at=report.created_at,
-        evidence_count=evidence_count,
+        evidence_count=len(evidence_list),
+        evidence_list=evidence_list,
     )
+
+
+@router.get("/reports/{report_id}/evidence/{evidence_id}/download")
+def download_evidence(
+    report_id: int,
+    evidence_id: int,
+    db: Session = Depends(get_db),
+    _investigator: Investigator = Depends(get_current_investigator),
+):
+    evidence = db.query(Evidence).filter(
+        Evidence.id == evidence_id,
+        Evidence.report_id == report_id
+    ).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+
+    file_path = BASE_DIR / evidence.sanitized_file_path
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File on disk not found")
+
+    encrypted_bytes = file_path.read_bytes()
+    clean_bytes = _fernet.decrypt(encrypted_bytes)
+
+    ext = Path(evidence.sanitized_file_path).suffix.lower()
+    media_type = "application/pdf" if ext == ".pdf" else f"image/{ext.replace('.', '')}"
+    if media_type == "image/jpg":
+        media_type = "image/jpeg"
+
+    headers = {
+        "Content-Disposition": f'inline; filename="evidence_{evidence_id}{ext}"'
+    }
+    return Response(content=clean_bytes, media_type=media_type, headers=headers)
 
 
 @router.patch("/reports/{report_id}/status", response_model=StatusUpdateResponse)

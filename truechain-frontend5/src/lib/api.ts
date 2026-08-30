@@ -109,3 +109,18 @@ export async function updateReportStatus(
     body: JSON.stringify(data),
   });
 }
+
+export async function downloadEvidenceFile(
+  token: string,
+  reportId: number,
+  evidenceId: number
+): Promise<Blob> {
+  const url = `${API_BASE}/investigator/reports/${reportId}/evidence/${evidenceId}/download`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error('Failed to download evidence file.');
+  }
+  return res.blob();
+}
