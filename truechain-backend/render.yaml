@@ -8,17 +8,15 @@ services:
     plan: free
     envVars:
       - key: FERNET_KEY
-        generateValue: false
-        value: your-fernet-key-here
+        value: YF7w_NVcloZDTNRuzl0zhTDJnf3n_4EbtAL7tpICU7A=
       - key: JWT_SECRET
-        generateValue: false
-        value: your-jwt-secret-here
+        value: 4d582cda46945a7974c8440cc7c0d7318d20a7a987bef7405fbf191c5f4621b4
       - key: JWT_EXPIRE_MINUTES
         value: "60"
       - key: AI_TRIAGE_ENABLED
         value: "false"
       - key: CORS_ORIGINS
-        value: https://your-vercel-app.vercel.app,http://localhost:3000
+        value: https://truechain.vercel.app,http://localhost:3000
     disk:
       name: truechain-data
       mountPath: /opt/render/project/src/backend/storage
