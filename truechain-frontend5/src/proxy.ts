@@ -10,7 +10,7 @@ import type { NextRequest } from 'next/server';
  * The dashboard pages perform their own token check and redirect
  * to /investigator/login if no token is found in the zustand store.
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Only match investigator dashboard routes (not login)
