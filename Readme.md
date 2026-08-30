@@ -25,10 +25,10 @@ Evaluators can test the complete platform end-to-end using our deployed producti
 
 | Component | Target URL / Quick Action | Evaluator Credentials & Instructions |
 |---|---|---|
-| 🌐 **Live Web Application** | [`https://truechain.vercel.app/`](https://truechain.vercel.app/) | Primary user interface for anonymous reporting |
-| 🕵️ **Investigator Portal** | [`https://truechain.vercel.app/investigator/login`](https://truechain.vercel.app/investigator/login) | **Username:** `sunnypathak979`<br>**Password:** `Sunny@979`<br>*(Alt: `admin` / `changeme123`)* |
-| 🔍 **Status Lookup** | [`https://truechain.vercel.app/status`](https://truechain.vercel.app/status) | Test session token:<br>`x9r4_87ww2CW_scMb2c7wtw6CnhyGCx5NC_-h73_WUQ` |
-| ⛓️ **Public Chain Audit** | [`https://truechain.vercel.app/verify`](https://truechain.vercel.app/verify) | Live SHA-256 cryptographic tamper verification |
+| 🌐 **Live Web Application** | [`https://true-chain-voice.vercel.app/`](https://true-chain-voice.vercel.app/) | Primary user interface for anonymous reporting |
+| 🕵️ **Investigator Portal** | [`https://true-chain-voice.vercel.app/investigator/login`](https://true-chain-voice.vercel.app/investigator/login) | **Username:** `sunnypathak979`<br>**Password:** `Sunny@979`<br>*(Alt: `admin` / `changeme123`)* |
+| 🔍 **Status Lookup** | [`https://true-chain-voice.vercel.app/status`](https://true-chain-voice.vercel.app/status) | Test session token:<br>`x9r4_87ww2CW_scMb2c7wtw6CnhyGCx5NC_-h73_WUQ` |
+| ⛓️ **Public Chain Audit** | [`https://true-chain-voice.vercel.app/verify`](https://true-chain-voice.vercel.app/verify) | Live SHA-256 cryptographic tamper verification |
 | ⚡ **FastAPI Backend API** | [`https://trust-chain-voice-1.onrender.com`](https://trust-chain-voice-1.onrender.com) | Production REST API & OpenAPI docs |
 
 ---
