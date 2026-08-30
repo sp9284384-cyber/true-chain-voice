@@ -2,9 +2,8 @@ services:
   - type: web
     name: truechain-backend
     runtime: python
-    rootDir: truechain-backend/backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r truechain-backend/backend/requirements.txt
+    startCommand: bash -c "cd truechain-backend/backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     plan: free
     envVars:
       - key: FERNET_KEY
