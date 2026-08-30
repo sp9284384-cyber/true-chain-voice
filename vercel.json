@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd truechain-frontend5 && npm install && npm run build",
-  "outputDirectory": "truechain-frontend5/.next",
-  "framework": "nextjs"
-}
