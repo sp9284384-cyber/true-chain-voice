@@ -3,11 +3,11 @@
 # 🛡️ TrueChain (SafeVoice)
 ### *Cryptographically Verifiable & Privacy-First Anonymous Reporting Platform*
 
-[![Live Web App](https://img.shields.io/badge/Live_App-Vercel_Production-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://truechain.vercel.app/)
+[![Live Web App](https://img.shields.io/badge/Live_App-Vercel_Production-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://true-chain-voice.vercel.app/)
 [![Live Backend API](https://img.shields.io/badge/Live_Backend-Render_API-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://trust-chain-voice-1.onrender.com)
-[![Problem Statement](https://img.shields.io/badge/Problem_ID-Omni__CyberTech__15-ff69b4?style=for-the-badge)](https://truechain.vercel.app/)
-[![Stack](https://img.shields.io/badge/Stack-FastAPI_%7C_Next.js_16_%7C_SQLite-009688?style=for-the-badge&logo=fastapi)](https://truechain.vercel.app/)
-[![Privacy](https://img.shields.io/badge/Privacy-Zero_PII_Schema-brightgreen?style=for-the-badge&logo=shield)](https://truechain.vercel.app/)
+[![Problem Statement](https://img.shields.io/badge/Problem_ID-Omni__CyberTech__15-ff69b4?style=for-the-badge)](https://true-chain-voice.vercel.app/)
+[![Stack](https://img.shields.io/badge/Stack-FastAPI_%7C_Next.js_16_%7C_SQLite-009688?style=for-the-badge&logo=fastapi)](https://true-chain-voice.vercel.app/)
+[![Privacy](https://img.shields.io/badge/Privacy-Zero_PII_Schema-brightgreen?style=for-the-badge&logo=shield)](https://true-chain-voice.vercel.app/)
 
 <p align="center">
   <b>Eliminating fear of workplace retaliation through cryptographic mathematical trust — zero PII, EXIF metadata stripping, AES-256 encryption, and an immutable SHA-256 hash-chain ledger.</b>
