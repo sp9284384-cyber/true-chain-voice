@@ -3,11 +3,11 @@
 # 🛡️ TrueChain (SafeVoice)
 ### *Cryptographically Verifiable & Privacy-First Anonymous Reporting Platform*
 
-[![Live Web App](https://img.shields.io/badge/Live_App-Vercel_Production-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://trust-chain-voice.vercel.app/)
+[![Live Web App](https://img.shields.io/badge/Live_App-Vercel_Production-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://truechain.vercel.app/)
 [![Live Backend API](https://img.shields.io/badge/Live_Backend-Render_API-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://trust-chain-voice-1.onrender.com)
-[![Problem Statement](https://img.shields.io/badge/Problem_ID-Omni__CyberTech__15-ff69b4?style=for-the-badge)](https://trust-chain-voice.vercel.app/)
-[![Stack](https://img.shields.io/badge/Stack-FastAPI_%7C_Next.js_16_%7C_SQLite-009688?style=for-the-badge&logo=fastapi)](https://trust-chain-voice.vercel.app/)
-[![Privacy](https://img.shields.io/badge/Privacy-Zero_PII_Schema-brightgreen?style=for-the-badge&logo=shield)](https://trust-chain-voice.vercel.app/)
+[![Problem Statement](https://img.shields.io/badge/Problem_ID-Omni__CyberTech__15-ff69b4?style=for-the-badge)](https://truechain.vercel.app/)
+[![Stack](https://img.shields.io/badge/Stack-FastAPI_%7C_Next.js_16_%7C_SQLite-009688?style=for-the-badge&logo=fastapi)](https://truechain.vercel.app/)
+[![Privacy](https://img.shields.io/badge/Privacy-Zero_PII_Schema-brightgreen?style=for-the-badge&logo=shield)](https://truechain.vercel.app/)
 
 <p align="center">
   <b>Eliminating fear of workplace retaliation through cryptographic mathematical trust — zero PII, EXIF metadata stripping, AES-256 encryption, and an immutable SHA-256 hash-chain ledger.</b>
@@ -25,10 +25,10 @@ Evaluators can test the complete platform end-to-end using our deployed producti
 
 | Component | Target URL / Quick Action | Evaluator Credentials & Instructions |
 |---|---|---|
-| 🌐 **Live Web Application** | [`https://trust-chain-voice.vercel.app/`](https://trust-chain-voice.vercel.app/) | Primary user interface for anonymous reporting |
-| 🕵️ **Investigator Portal** | [`https://trust-chain-voice.vercel.app/investigator/login`](https://trust-chain-voice.vercel.app/investigator/login) | **Username:** `sunnypathak979`<br>**Password:** `Sunny@979`<br>*(Alt: `admin` / `changeme123`)* |
-| 🔍 **Status Lookup** | [`https://trust-chain-voice.vercel.app/status`](https://trust-chain-voice.vercel.app/status) | Test session token:<br>`x9r4_87ww2CW_scMb2c7wtw6CnhyGCx5NC_-h73_WUQ` |
-| ⛓️ **Public Chain Audit** | [`https://trust-chain-voice.vercel.app/verify`](https://trust-chain-voice.vercel.app/verify) | Live SHA-256 cryptographic tamper verification |
+| 🌐 **Live Web Application** | [`https://truechain.vercel.app/`](https://truechain.vercel.app/) | Primary user interface for anonymous reporting |
+| 🕵️ **Investigator Portal** | [`https://truechain.vercel.app/investigator/login`](https://truechain.vercel.app/investigator/login) | **Username:** `sunnypathak979`<br>**Password:** `Sunny@979`<br>*(Alt: `admin` / `changeme123`)* |
+| 🔍 **Status Lookup** | [`https://truechain.vercel.app/status`](https://truechain.vercel.app/status) | Test session token:<br>`x9r4_87ww2CW_scMb2c7wtw6CnhyGCx5NC_-h73_WUQ` |
+| ⛓️ **Public Chain Audit** | [`https://truechain.vercel.app/verify`](https://truechain.vercel.app/verify) | Live SHA-256 cryptographic tamper verification |
 | ⚡ **FastAPI Backend API** | [`https://trust-chain-voice-1.onrender.com`](https://trust-chain-voice-1.onrender.com) | Production REST API & OpenAPI docs |
 
 ---
