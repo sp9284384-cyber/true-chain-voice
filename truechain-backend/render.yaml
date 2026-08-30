@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: truechain-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: FERNET_KEY
+        generateValue: false
+        value: your-fernet-key-here
+      - key: JWT_SECRET
+        generateValue: false
+        value: your-jwt-secret-here
+      - key: JWT_EXPIRE_MINUTES
+        value: "60"
+      - key: AI_TRIAGE_ENABLED
+        value: "false"
+      - key: CORS_ORIGINS
+        value: https://your-vercel-app.vercel.app,http://localhost:3000
+    disk:
+      name: truechain-data
+      mountPath: /opt/render/project/src/backend/storage
+      sizeGB: 1
