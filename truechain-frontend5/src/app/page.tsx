@@ -13,6 +13,7 @@ import {
   FileX2,
   Fingerprint,
   ArrowRight,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/shared/Header';
@@ -321,6 +322,30 @@ export default function Home() {
                 <Button asChild variant="outline" size="lg">
                   <Link href="/verify">Verify Chain Integrity</Link>
                 </Button>
+              </motion.div>
+
+              {/* Evaluator & Investigator Note Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-6 w-full max-w-lg rounded-xl border border-[#0d9488]/30 bg-[#0d9488]/10 p-4 text-left shadow-lg backdrop-blur-sm"
+              >
+                <div className="flex items-center gap-2 text-[#0d9488] font-semibold text-xs tracking-wider uppercase mb-1.5">
+                  <Shield className="size-4 shrink-0" />
+                  <span>Evaluator & Investigator Demo Access</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  After submitting a report, evaluators and investigators can log in to review decrypted report content and evidence attachments:
+                </p>
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-[#0d9488]/20 bg-background/80 px-3.5 py-2 text-xs font-mono">
+                  <span>Username: <strong className="text-foreground select-all">admin</strong></span>
+                  <span className="text-muted-foreground/40">|</span>
+                  <span>Password: <strong className="text-foreground select-all">changeme123</strong></span>
+                  <Link href="/investigator/login" className="ml-auto text-[#0d9488] underline font-sans font-medium hover:text-[#0d9488]/80">
+                    Login Portal →
+                  </Link>
+                </div>
               </motion.div>
             </div>
 
