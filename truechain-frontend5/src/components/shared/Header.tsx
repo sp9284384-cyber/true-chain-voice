@@ -17,7 +17,6 @@ import {
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/report', label: 'Report' },
-  { href: '/verify', label: 'Verify Chain' },
   { href: '/investigator/login', label: 'Investigator' },
 ];
 
