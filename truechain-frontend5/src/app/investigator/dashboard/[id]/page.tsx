@@ -238,8 +238,13 @@ export default function ReportDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0 space-y-4">
-            {(!report.evidence_list || report.evidence_list.length === 0) ? (
+            {report.evidence_count === 0 ? (
               <p className="text-sm text-muted-foreground italic">No evidence files were attached to this report.</p>
+            ) : (!report.evidence_list || report.evidence_list.length === 0) ? (
+              <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+                <span className="text-sm text-muted-foreground">Loading attached evidence files...</span>
+                <Button variant="ghost" size="sm" onClick={fetchReport} className="text-xs">Retry</Button>
+              </div>
             ) : (
               report.evidence_list.map((item) => (
                 <div key={item.id} className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
