@@ -6,7 +6,7 @@
   "installCommand": "npm install",
   "build": {
     "env": {
-      "NEXT_PUBLIC_API_URL": "https://your-render-backend.onrender.com"
+      "NEXT_PUBLIC_API_URL": "https://trust-chain-voice-1.onrender.com"
     }
   }
 }
