@@ -35,7 +35,7 @@ AI_TRIAGE_ENABLED = os.getenv("AI_TRIAGE_ENABLED", "false").lower() == "true"
 # Add your deployed frontend URL here too when you have one.
 CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
+    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,http://localhost:3002"
 ).split(",")
 
 VALID_CATEGORIES = ["harassment", "corruption", "misconduct", "other"]

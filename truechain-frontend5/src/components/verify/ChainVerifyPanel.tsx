@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { verifyChain } from '@/lib/api';
 import type { VerifyResponse } from '@/lib/types';
@@ -27,7 +27,7 @@ export function ChainVerifyPanel() {
   const [error, setError] = useState<string | null>(null);
   const [chainReports, setChainReports] = useState<ChainNode[]>([]);
 
-  const handleVerify = async () => {
+  const handleVerify = useCallback(async () => {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -50,7 +50,11 @@ export function ChainVerifyPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    handleVerify();
+  }, [handleVerify]);
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-8">
