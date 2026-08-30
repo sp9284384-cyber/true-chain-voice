@@ -51,7 +51,7 @@ def classify_report(content: str) -> dict:
         resp = httpx.post(
             f"{OLLAMA_HOST}/api/generate",
             json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "format": "json"},
-            timeout=15.0,
+            timeout=2.0,
         )
         resp.raise_for_status()
         raw = resp.json().get("response", "")
@@ -74,17 +74,7 @@ def classify_report(content: str) -> dict:
 
 def generate_embedding(content: str) -> bytes | None:
     """
-    Optional stretch goal: sentence-transformers embedding for clustering similar
-    reports. Returns None (not bytes) if the library isn't installed / enabled —
-    callers must handle None gracefully, this is never required for core flow.
+    Optional stretch goal: sentence-transformers embedding for clustering.
+    Disabled during standard request pipeline to avoid PyTorch loading overhead.
     """
-    try:
-        from sentence_transformers import SentenceTransformer
-        import numpy as np
-
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        vector = model.encode(content)
-        return np.asarray(vector, dtype=np.float32).tobytes()
-    except Exception as exc:
-        logger.info("Embedding generation skipped: %s", exc)
-        return None
+    return None

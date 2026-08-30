@@ -29,7 +29,7 @@ ALLOWED_EVIDENCE_TYPES = {".jpg", ".jpeg", ".png", ".pdf"}
 # --- AI triage (Ollama) ---
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
-AI_TRIAGE_ENABLED = os.getenv("AI_TRIAGE_ENABLED", "true").lower() == "true"
+AI_TRIAGE_ENABLED = os.getenv("AI_TRIAGE_ENABLED", "false").lower() == "true"
 
 # --- CORS (so the frontend can connect without extra config) ---
 # Add your deployed frontend URL here too when you have one.
