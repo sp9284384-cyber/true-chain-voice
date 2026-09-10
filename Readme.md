@@ -118,7 +118,7 @@ Investigators authenticate via JWT. Attached evidence files are stored encrypted
 ### **Frontend**
 * **Framework:** Next.js 16 (App Router with Turbopack), React 19
 * **Styling:** Tailwind CSS, Radix UI / Shadcn UI components, Framer Motion
-* **State & Icons:** Zustand, Lucide React
+* **State & Icons:** Zustand, Lucide React, Next.Js
 * **Deployment:** Vercel
 
 ### **Backend**
