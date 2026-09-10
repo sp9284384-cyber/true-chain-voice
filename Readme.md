@@ -118,7 +118,7 @@ Investigators authenticate via JWT. Attached evidence files are stored encrypted
 ### **Frontend**
 * **Framework:** Next.js 16 (App Router with Turbopack), React 19
 * **Styling:** Tailwind CSS, Radix UI / Shadcn UI components, Framer Motion
-* **State & Icons:** Zustand, Lucide React
+* **State & Icons:** Zustand, Lucide React, Next.Js
 * **Deployment:** Vercel
 
 ### **Backend**
@@ -126,7 +126,7 @@ Investigators authenticate via JWT. Attached evidence files are stored encrypted
 * **Cryptography:** Cryptography (Fernet AES-256), hashlib (SHA-256), PyPDF, Pillow
 * **Authentication:** Python-Jose (JWT), Bcrypt password hashing
 * **Database:** SQLite with SQLAlchemy ORM
-* **Deployment:** Render (with 1GB persistent storage disk)
+* **Deployment:** Render (with 8GB persistent storage disk)
 
 ---
 
