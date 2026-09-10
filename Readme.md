@@ -126,7 +126,7 @@ Investigators authenticate via JWT. Attached evidence files are stored encrypted
 * **Cryptography:** Cryptography (Fernet AES-256), hashlib (SHA-256), PyPDF, Pillow
 * **Authentication:** Python-Jose (JWT), Bcrypt password hashing
 * **Database:** SQLite with SQLAlchemy ORM
-* **Deployment:** Render (with 1GB persistent storage disk)
+* **Deployment:** Render (with 8GB persistent storage disk)
 
 ---
 
